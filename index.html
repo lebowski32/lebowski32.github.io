@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CV: [ДАННЫЕ ПОВРЕЖДЕНЫ]</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Creepster&family=VT323&family=Anonymous+Pro&display=swap');
+
+        body {
+            background-color: #000000;
+            color: #00ff00;
+            font-family: 'Anonymous Pro', monospace;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 20px;
+            cursor: none;
+            background-image: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="4" height="4" viewBox="0 0 4 4"%3E%3Cpath fill="%23ff0000" fill-opacity="0.11" d="M1 3h1v1H1V3zm2-2h1v1H3V1z"%3E%3C/path%3E%3C/svg%3E');
+            animation: screenFlicker 10s infinite;
+        }
+
+        .custom-cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border: 1px solid #00ff00;
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            transition: transform 0.1s;
+            z-index: 9999;
+        }
+
+        .custom-cursor::after {
+            content: '';
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #ff0000;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            border: 1px solid #333;
+            padding: 25px;
+            box-shadow: 0 0 25px rgba(255, 0, 0, 0.3);
+            position: relative;
+        }
+        
+        .static-text {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 15vw;
+            color: rgba(255, 0, 0, 0.05);
+            font-family: 'Creepster', cursive;
+            z-index: 0;
+            animation: textFlicker 1.5s infinite;
+            pointer-events: none;
+        }
+
+        header {
+            text-align: center;
+            border-bottom: 1px dashed #ff0000;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+        }
+
+        h1 {
+            font-family: 'Creepster', cursive;
+            font-size: 4em;
+            color: #cc0000;
+            margin: 0;
+            text-shadow: 0 0 10px #ff0000;
+            animation: pulse 1.5s infinite;
+            letter-spacing: 5px;
+        }
+
+        .contact-info {
+            font-family: 'VT323', monospace;
+            font-size: 1.2em;
+            word-spacing: 15px;
+        }
+
+        .contact-info span {
+            color: #fff;
+        }
+
+        h2 {
+            font-family: 'VT323', monospace;
+            font-size: 2.5em;
+            color: #ff0000;
+            border-bottom: 1px solid #555;
+            margin-top: 30px;
+            text-shadow: 0 0 5px #ff0000;
+            animation: shake 5s infinite;
+        }
+        
+        ul {
+            list-style-type: '>';
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            padding-left: 10px;
+        }
+        li::marker {
+            color: #ff0000;
+            animation: blink 1s step-end infinite;
+        }
+
+        .experience .title {
+            color: #fff;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        .experience .company {
+            color: #ff4500;
+            font-style: italic;
+        }
+        .experience .duties {
+            color: #bbb;
+        }
+
+        .glitch-block {
+            position: absolute;
+            top: 15%;
+            right: -50px;
+            font-size: 2em;
+            color: #fff;
+            transform: rotate(90deg);
+            font-family: 'Creepster', cursive;
+            animation: glitch 1.5s infinite;
+            z-index: 2;
+        }
+
+        .footer-quote {
+            margin-top: 40px;
+            text-align: center;
+            font-style: italic;
+            color: #888;
+            font-size: 1.2em;
+            font-family: serif;
+        }
+        
+        /* Анимации */
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); text-shadow: 0 0 10px #ff0000; }
+            50% { transform: scale(1.02); text-shadow: 0 0 20px #ff0000; }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+            20%, 40%, 60%, 80% { transform: translateX(2px); }
+        }
+        @keyframes glitch {
+            0%, 100% { text-shadow: 2px 2px #00f, -2px -2px #0f0; }
+            25% { text-shadow: -2px 2px #00f, 2px -2px #0f0; }
+            50% { text-shadow: 2px -2px #00f, -2px 2px #0f0; }
+            75% { text-shadow: -2px -2px #00f, 2px 2px #0f0; }
+        }
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+        @keyframes textFlicker {
+            0%, 19%, 21%, 59%, 61%, 100% { opacity: 0.05; }
+            20%, 60% { opacity: 0.02; }
+        }
+        @keyframes screenFlicker {
+            0%, 100% { background-color: #000; }
+            50% { background-color: #010101; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="custom-cursor"></div>
+    <div class="static-text">Я В СЕТИ</div>
+    <div class="glitch-block">ACCESS GRANTED</div>
+
+    <div class="container">
+        <header>
+            <h1>Даниил 'lebowski'</h1>
+            <div class="contact-info">
+                Возраст: <span>20</span> // Локация: <span>За вашим файрволом</span> // Почта: <span>root@localhost</span>
+            </div>
+        </header>
+
+        <main>
+            <section class="objective">
+                <h2>// Цель</h2>
+                <p>Не ищу работу. Ищу доступ. К системам, к данным, к... порядку. Я — тот, кто исправляет аномалии в вашей сети. Иногда — создаёт их.</p>
+            </section>
+
+            <section class="skills">
+                <h2>// Ключевые навыки</h2>
+                <ul>
+                    <li>Администрирование OS: Windows Server, Linux (Debian, CentOS). Они делают то, что я говорю.</li>
+                    <li>Сетевые протоколы: Чтение TCP/IP, DNS, DHCP пакетов. Даже тех, что не для меня.</li>
+                    <li>Виртуализация: VMware, Hyper-V. Создание и уничтожение цифровых миров по щелчку пальцев.</li>
+                    <li>Скриптинг: Bash, PowerShell. Автоматизация рутины. И не только рутины.</li>
+                    <li>Безопасность: Установка файрволов... и обход чужих.</li>
+                    <li>Железо: Слышу шёпот умирающих жёстких дисков и предсмертный писк БП.</li>
+                    <li>Софт-скилл: Социальная инженерия.</li>
+                </ul>
+            </section>
+
+            <section class="experience">
+                <h2>// Опыт [ДАННЫЕ ИСКАЖЕНЫ]</h2>
+                <div class="job">
+                    <p><span class="title">Хранитель Сети</span> (2023 - н.в.)</p>
+                    <p class="company">@ Структура [ИНФОРМАЦИЯ УДАЛЕНА]</p>
+                    <ul class="duties">
+                        <li>Мониторинг всего. Абсолютно всего.</li>
+                        <li>Устранение аномалий (людей и программ).</li>
+                        <li>Обеспечение бесперебойной работы... потока данных.</li>
+                    </ul>
+                </div>
+                <div class="job">
+                    <p><span class="title">Вольный Архитектор</span> (2021 - 2023)</p>
+                    <p class="company">@ Глубины Интернета</p>
+                    <ul class="duties">
+                        <li>Сборка и настройка кастомных серверов из подручных материалов.</li>
+                        <li>Прокладка сетей там, где их не должно было быть.</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section class="education">
+                <h2>// Образование</h2>
+                <ul>
+                    <li>Самообучение. Лучший университет — это логи ошибок и документация.</li>
+                    <li>Сертификаты, которые вы никогда не найдете.</li>
+                </ul>
+            </section>
+
+            <p class="footer-quote">
+                "Я не тот, кого вы ищете. Я тот, кто уже вас нашёл."
+            </p>
+        </main>
+    </div>
+
+    <script>
+        const cursor = document.querySelector('.custom-cursor');
+        document.addEventListener('mousemove', e => {
+            cursor.setAttribute("style", "top: "+(e.pageY)+"px; left: "+(e.pageX)+"px;")
+        });
+    </script>
+</body>
+</html>
