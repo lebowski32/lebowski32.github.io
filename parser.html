@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Каталог: Парсер Work.ua</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Fira+Code&display=swap');
+    body{background:#1a1a1d;color:#c5c6c7;font-family:'Roboto',sans-serif;line-height:1.6;margin:0;padding:20px}
+    .container{max-width:900px;margin:40px auto;border:1px solid #4e4e50;padding:20px 40px;background:#252528;box-shadow:0 0 25px rgba(0,0,0,.5)}
+    h1,h2{font-weight:700;color:#f94c10;border-bottom:2px solid #f94c10;padding-bottom:10px;margin-top:40px;letter-spacing:1px;text-transform:uppercase}
+    p{font-size:1.1em}
+    .manual ol{border:1px solid #4e4e50;padding:20px 20px 20px 50px;font-size:1.1em;background:#1a1a1d}
+    .manual li{margin-bottom:10px}.manual b{color:#f94c10}
+    .code-container{position:relative;margin-top:20px}
+    .code-container pre{background:#0f0f10;border:1px solid #4e4e50;padding:20px;overflow-x:auto;font-family:'Fira Code',monospace;font-size:.95em;color:#a9b7c6;white-space:pre-wrap;word-wrap:break-word}
+    .code-container button{position:absolute;top:15px;right:15px;background:#f94c10;color:#000;border:none;padding:8px 15px;font-weight:700;font-size:1em;cursor:pointer;transition:.2s;text-transform:uppercase}
+    .code-container button:hover{background:#fff;box-shadow:0 0 15px #f94c10}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Каталог // Парсер Work.ua</h1>
+    <p>Скрипт обходит все страницы текущей выдачи Work.ua, собирает должность, компанию, зарплату и ссылку, а затем выводит их в новой чистой вкладке с таблицей и кнопкой скачивания CSV.</p>
+
+    <div class="manual">
+      <h2>Краткий мануал</h2>
+      <ol>
+        <li>Откройте Work.ua и выставьте нужные фильтры.</li>
+        <li>Нажмите <b>F12</b> → вкладка <b>Console</b>.</li>
+        <li>Если браузер просит разрешить вставку — следуйте подсказке (иногда нужно ввести <code>allow pasting</code>).</li>
+        <li>Скопируйте код ниже и вставьте в консоль, нажмите <b>Enter</b>.</li>
+      </ol>
+    </div>
+
+    <div class="code-container">
+      <button id="copy-script-btn">Копировать код</button>
+      <pre><code id="parser-code">
+	  (async () => {
+  // ---------- окно результата (с фолбэком) ----------
+  let win = window.open('about:blank', '_blank');
+  let fallback = false;
+  if (!win) { fallback = true; win = window; }
+
+  const d = win.document;
+  d.open();
+  d.write('<!doctype html><html><head><meta charset="utf-8"><title>Вакансии — экспорт</title></head><body><h1>Готовим данные…</h1></body></html>');
+  d.close();
+
+  // ---------- helpers ----------
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  const base = new URL(location.href); base.searchParams.delete('page');
+  const parser = new DOMParser();
+  const getDoc = async (url) => parser.parseFromString(
+    await fetch(url, { credentials:'same-origin' }).then(r=>r.text()),
+    'text/html'
+  );
+  const getTotalPages = (doc) => {
+    const nums = new Set();
+    doc.querySelectorAll('a[href*="page="]').forEach(a=>{
+      const p = Number(new URL(a.href, location.href).searchParams.get('page'));
+      if (Number.isFinite(p)) nums.add(p);
+    });
+    const last = doc.querySelector('a[rel="last"], a.pagination__last');
+    if (last) {
+      const p = Number(new URL(last.href, location.href).searchParams.get('page'));
+      if (Number.isFinite(p)) nums.add(p);
+    }
+    return nums.size ? Math.max(...nums) : 1;
+  };
+  const isJobHref = (h='') => /\/(jobs|vacancy)\//i.test(h);
+  const txt = (el) => (el?.textContent || '').replace(/\s+/g,' ').trim();
+
+  const findCard = (el) => {
+    let n = el; for (let i=0; n && i<8; i++) {
+      if (n.matches?.('article, .card, .job-item, .job, .card-hover, li')) return n;
+      n = n.parentElement;
+    } return el;
+  };
+
+  const extractFromCard = (card, a) => {
+    const href = new URL(a.getAttribute('href'), location.origin).href;
+    const title = txt(a);
+    let company = '';
+    const sels = [
+      'a[href*="/employer/"]','a[href*="/company/"]','[data-qa*="employer"]',
+      '.job-item__company a','.add-top-xs a'
+    ];
+    for (const s of sels) {
+      const el = card?.querySelector?.(s);
+      if (el && txt(el)) { company = txt(el); break; }
+    }
+    if (!company) {
+      const guess = [...card.querySelectorAll('a, span, div, b, strong')]
+        .find(x => /ТОВ|ООО|LLC|LTD|Inc|GmbH|ФОП|ПП|Company|Компан/i.test(x.textContent));
+      company = txt(guess);
+    }
+    let salary = 'Не вказано';
+    const salNode = [...card.querySelectorAll('div, span, p, strong, b')]
+      .find(x => /(\₴|грн|\$|USD|€|EUR|долар|євро)/i.test(x.textContent));
+    if (salNode) salary = txt(salNode);
+    return { title, company, salary, href };
+  };
+
+  const extractPageJobs = (doc) => {
+    const anchors = [...doc.querySelectorAll('a[href]')].filter(a => isJobHref(a.getAttribute('href')));
+    const out = []; const seenLocal = new Set();
+    for (const a of anchors) {
+      const card = findCard(a);
+      const item = extractFromCard(card, a);
+      if (!seenLocal.has(item.href)) { seenLocal.add(item.href); out.push(item); }
+    }
+    return out;
+  };
+
+  // ---------- сбор ----------
+  const totalPages = getTotalPages(document);
+  const urls = Array.from({length: totalPages}, (_,i)=> {
+    const u = new URL(base); if (i>0) u.searchParams.set('page', i+1); return u.toString();
+  });
+
+  const jobs = []; const seen = new Set();
+  for (let i = 0; i < urls.length; i++) {
+    const doc = (i === 0) ? document : await getDoc(urls[i]);
+    const pageJobs = extractPageJobs(doc);
+    for (const j of pageJobs) {
+      if (!seen.has(j.href)) { seen.add(j.href); jobs.push(j); }
+    }
+    if (i > 0) await sleep(350);
+  }
+
+  // ---------- верстка результата ----------
+  const style = d.createElement('style');
+  style.textContent = `
+    body{font:14px/1.45 system-ui,Arial,sans-serif;margin:20px}
+    h1{font-size:20px;margin:0 0 12px}
+    table{border-collapse:collapse;width:100%}
+    th,td{border:1px solid #ccc;padding:6px 8px;vertical-align:top}
+    th{white-space:nowrap;text-align:left;background:#f6f6f6}
+    td a{word-break:break-word}
+    caption{caption-side:bottom;text-align:left;margin-top:8px;font-size:12px;color:#666}
+    .btn{padding:6px 10px;cursor:pointer;margin:6px 0 12px 0}
+  `;
+  d.head.appendChild(style);
+  d.body.innerHTML = '';
+
+  const h1 = d.createElement('h1');
+  h1.textContent = `Вакансии — объединённый список (${jobs.length})`;
+  d.body.appendChild(h1);
+
+  const btn = d.createElement('button');
+  btn.className = 'btn';
+  btn.textContent = 'Скачать CSV';
+  d.body.appendChild(btn);
+
+  const table = d.createElement('table');
+  const thead = d.createElement('thead');
+  const hdr = d.createElement('tr');
+  ['№','Должность','Компания','Зарплата','Ссылка'].forEach(h=>{
+    const th = d.createElement('th'); th.textContent = h; hdr.appendChild(th);
+  });
+  thead.appendChild(hdr);
+  const tbody = d.createElement('tbody');
+
+  jobs.forEach((j, i) => {
+    const tr = d.createElement('tr');
+    const td1 = d.createElement('td'); td1.textContent = String(i+1); tr.appendChild(td1);
+    const td2 = d.createElement('td'); td2.textContent = j.title; tr.appendChild(td2);
+    const td3 = d.createElement('td'); td3.textContent = j.company || ''; tr.appendChild(td3);
+    const td4 = d.createElement('td'); td4.textContent = j.salary || ''; tr.appendChild(td4);
+    const td5 = d.createElement('td');
+    const a = d.createElement('a'); a.href = j.href; a.target = '_blank'; a.rel = 'noopener'; a.textContent = j.href;
+    td5.appendChild(a); tr.appendChild(td5);
+    tbody.appendChild(tr);
+  });
+
+  const caption = d.createElement('caption');
+  caption.textContent = `Сгенерировано со всех страниц текущей выдачи: ${urls.length} стр.`;
+
+  table.appendChild(thead);
+  table.appendChild(tbody);
+  table.appendChild(caption);
+  d.body.appendChild(table);
+
+  // ---------- CSV ----------
+  const csvCell = (v) => {
+    let s = String(v ?? ''); if (/^[=+\-@]/.test(s)) s = "'" + s; s = s.replace(/"/g,'""'); return `"${s}"`;
+  };
+  const rows = [['№','Title','Company','Salary','Link']];
+  jobs.forEach((j,i)=>rows.push([i+1,j.title,j.company,j.salary,j.href].map(csvCell)));
+  const csv = rows.map(r=>r.join(',')).join('\n');
+
+  btn.addEventListener('click', () => {
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    const a = d.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `jobs-export-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  if (fallback) console.warn('Попап заблокирован: результат выведен в текущей вкладке.');
+})().catch(e => { console.error(e); alert('Ошибка: ' + e.message); });</code></pre>
+    </div>
+  </div>
+
+  <script>
+    const copyButton = document.getElementById('copy-script-btn');
+    const codeToCopy = document.getElementById('parser-code');
+    copyButton.addEventListener('click', () => {
+      navigator.clipboard.writeText(codeToCopy.textContent)
+        .then(() => {
+          copyButton.textContent = 'СКОПИРОВАНО!';
+          setTimeout(() => { copyButton.textContent = 'Копировать код'; }, 2000);
+        })
+        .catch(err => {
+          console.error('Ошибка при копировании кода: ', err);
+          copyButton.textContent = 'ОШИБКА!';
+        });
+    });
+  </script>
+</body>
+</html>
